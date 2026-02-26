@@ -82,12 +82,92 @@ textarea {
   font: inherit;
 }
 
+.bg-orbs {
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  overflow: hidden;
+}
+
+.bg-orb {
+  position: absolute;
+  border-radius: 50%;
+  filter: blur(80px);
+}
+
+.orb-1 {
+  width: 420px;
+  height: 420px;
+  background: radial-gradient(circle, rgba(90, 50, 180, 0.18), transparent 70%);
+  top: 10%;
+  left: -5%;
+  animation: orbDrift1 18s ease-in-out infinite;
+}
+
+.orb-2 {
+  width: 350px;
+  height: 350px;
+  background: radial-gradient(circle, rgba(50, 30, 140, 0.15), transparent 70%);
+  top: 55%;
+  right: -8%;
+  animation: orbDrift2 22s ease-in-out infinite;
+}
+
+.orb-3 {
+  width: 300px;
+  height: 300px;
+  background: radial-gradient(circle, rgba(120, 60, 200, 0.12), transparent 70%);
+  bottom: 5%;
+  left: 30%;
+  animation: orbDrift3 25s ease-in-out infinite;
+}
+
+.orb-4 {
+  width: 260px;
+  height: 260px;
+  background: radial-gradient(circle, rgba(70, 40, 160, 0.14), transparent 70%);
+  top: 30%;
+  right: 20%;
+  animation: orbDrift4 20s ease-in-out infinite;
+}
+
+@keyframes orbDrift1 {
+  0%, 100% { transform: translate(0, 0) scale(1); }
+  25% { transform: translate(60px, 40px) scale(1.08); }
+  50% { transform: translate(20px, 80px) scale(0.95); }
+  75% { transform: translate(-40px, 30px) scale(1.05); }
+}
+
+@keyframes orbDrift2 {
+  0%, 100% { transform: translate(0, 0) scale(1); }
+  25% { transform: translate(-50px, -30px) scale(1.06); }
+  50% { transform: translate(-80px, 20px) scale(0.92); }
+  75% { transform: translate(-20px, -60px) scale(1.03); }
+}
+
+@keyframes orbDrift3 {
+  0%, 100% { transform: translate(0, 0) scale(1); }
+  25% { transform: translate(40px, -50px) scale(1.1); }
+  50% { transform: translate(-30px, -20px) scale(0.94); }
+  75% { transform: translate(60px, -40px) scale(1.02); }
+}
+
+@keyframes orbDrift4 {
+  0%, 100% { transform: translate(0, 0) scale(1); }
+  25% { transform: translate(-30px, 50px) scale(0.96); }
+  50% { transform: translate(40px, 30px) scale(1.08); }
+  75% { transform: translate(20px, -40px) scale(0.98); }
+}
+
 .app-shell {
   min-height: 100vh;
   padding: 2.5rem clamp(1.4rem, 4vw, 3.5rem) 3.5rem;
   display: flex;
   flex-direction: column;
   gap: 2.5rem;
+  position: relative;
+  z-index: 1;
 }
 
 .app-header {
@@ -454,8 +534,18 @@ textarea {
 }
 
 .achievement-icon {
-  font-size: 1.6rem;
   flex-shrink: 0;
+  width: 2.2rem;
+  height: 2.2rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--accent-strong);
+}
+
+.achievement-icon svg {
+  width: 1.4rem;
+  height: 1.4rem;
 }
 
 .achievement-item h3 {

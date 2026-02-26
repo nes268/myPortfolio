@@ -1,7 +1,93 @@
-import { type ReactNode, useEffect, useRef, useState } from 'react'
+import { type ReactNode, useCallback, useEffect, useRef, useState } from 'react'
 import { AnimatePresence, motion } from 'framer-motion'
 import profileImg from './assets/profile.jpg'
 import './App.css'
+
+function CursorGlitter() {
+  const canvasRef = useRef<HTMLCanvasElement>(null)
+  const particles = useRef<Array<{
+    x: number; y: number; vx: number; vy: number
+    size: number; alpha: number; decay: number
+    color: string
+  }>>([])
+  const mouse = useRef({ x: -100, y: -100 })
+  const raf = useRef(0)
+
+  const COLORS = [
+    'rgba(167, 139, 218,',
+    'rgba(139, 108, 193,',
+    'rgba(180, 160, 230,',
+    'rgba(120, 80, 200,',
+    'rgba(200, 180, 255,',
+  ]
+
+  const onMove = useCallback((e: MouseEvent) => {
+    mouse.current = { x: e.clientX, y: e.clientY }
+    for (let i = 0; i < 2; i++) {
+      particles.current.push({
+        x: e.clientX + (Math.random() - 0.5) * 6,
+        y: e.clientY + (Math.random() - 0.5) * 6,
+        vx: (Math.random() - 0.5) * 1,
+        vy: (Math.random() - 0.5) * 1 - 0.3,
+        size: Math.random() * 1.2 + 0.4,
+        alpha: 0.8,
+        decay: Math.random() * 0.018 + 0.012,
+        color: COLORS[Math.floor(Math.random() * COLORS.length)],
+      })
+    }
+  }, [])
+
+  useEffect(() => {
+    const canvas = canvasRef.current
+    if (!canvas) return
+    const ctx = canvas.getContext('2d')
+    if (!ctx) return
+
+    const resize = () => {
+      canvas.width = window.innerWidth
+      canvas.height = window.innerHeight
+    }
+    resize()
+    window.addEventListener('resize', resize)
+    window.addEventListener('mousemove', onMove)
+
+    const animate = () => {
+      ctx.clearRect(0, 0, canvas.width, canvas.height)
+      const ps = particles.current
+      for (let i = ps.length - 1; i >= 0; i--) {
+        const p = ps[i]
+        p.x += p.vx
+        p.y += p.vy
+        p.alpha -= p.decay
+        if (p.alpha <= 0) { ps.splice(i, 1); continue }
+        ctx.beginPath()
+        ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2)
+        ctx.fillStyle = `${p.color} ${p.alpha})`
+        ctx.fill()
+      }
+      raf.current = requestAnimationFrame(animate)
+    }
+    raf.current = requestAnimationFrame(animate)
+
+    return () => {
+      cancelAnimationFrame(raf.current)
+      window.removeEventListener('resize', resize)
+      window.removeEventListener('mousemove', onMove)
+    }
+  }, [onMove])
+
+  return (
+    <canvas
+      ref={canvasRef}
+      style={{
+        position: 'fixed',
+        inset: 0,
+        zIndex: 9999,
+        pointerEvents: 'none',
+      }}
+    />
+  )
+}
 
 type SectionId =
   | 'home'
@@ -587,28 +673,28 @@ function App() {
               viewport={{ once: true, amount: 0.12 }}
             >
               <motion.div className="achievement-item glass-card" variants={staggerItem}>
-                <span className="achievement-icon">&#128187;</span>
+                <span className="achievement-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="16 18 22 12 16 6" /><polyline points="8 6 2 12 8 18" /></svg></span>
                 <div>
                   <h3>LeetCode: 300+ problems solved</h3>
                   <p>Consistent problem-solving across data structures, algorithms, and competitive programming.</p>
                 </div>
               </motion.div>
               <motion.div className="achievement-item glass-card" variants={staggerItem}>
-                <span className="achievement-icon">&#127942;</span>
+                <span className="achievement-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6" /><path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18" /><path d="M4 22h16" /><path d="M10 14.66V17c0 .55-.47.98-.97 1.21C7.85 18.75 7 20.24 7 22" /><path d="M14 14.66V17c0 .55.47.98.97 1.21C16.15 18.75 17 20.24 17 22" /><path d="M18 2H6v7a6 6 0 0 0 12 0V2Z" /></svg></span>
                 <div>
                   <h3><a href="https://drive.google.com/file/d/1E_TkE-e1wQ1jcO0xtJnrHQDYYyXsaE1p/view?usp=drivesdk" target="_blank" rel="noopener noreferrer">AWS ImpactX Challenge IIT Bombay</a></h3>
                   <p>Finalist</p>
                 </div>
               </motion.div>
               <motion.div className="achievement-item glass-card" variants={staggerItem}>
-                <span className="achievement-icon">&#127942;</span>
+                <span className="achievement-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6" /><path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18" /><path d="M4 22h16" /><path d="M10 14.66V17c0 .55-.47.98-.97 1.21C7.85 18.75 7 20.24 7 22" /><path d="M14 14.66V17c0 .55.47.98.97 1.21C16.15 18.75 17 20.24 17 22" /><path d="M18 2H6v7a6 6 0 0 0 12 0V2Z" /></svg></span>
                 <div>
                   <h3><a href="https://drive.google.com/file/d/17Q0j5mByhHtDxFTfGETDEUKyRaUNwimz/view?usp=drivesdk" target="_blank" rel="noopener noreferrer">Amaravati Quantum Valley Hackathon '25</a></h3>
                   <p>Finalist</p>
                 </div>
               </motion.div>
               <motion.div className="achievement-item glass-card" variants={staggerItem}>
-                <span className="achievement-icon">&#127942;</span>
+                <span className="achievement-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6" /><path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18" /><path d="M4 22h16" /><path d="M10 14.66V17c0 .55-.47.98-.97 1.21C7.85 18.75 7 20.24 7 22" /><path d="M14 14.66V17c0 .55.47.98.97 1.21C16.15 18.75 17 20.24 17 22" /><path d="M18 2H6v7a6 6 0 0 0 12 0V2Z" /></svg></span>
                 <div>
                   <h3>Zenith (Hyderabad) 2025</h3>
                   <p>Final Round</p>
@@ -748,6 +834,13 @@ function App() {
 
   return (
     <>
+      <CursorGlitter />
+      <div className="bg-orbs" aria-hidden="true">
+        <div className="bg-orb orb-1" />
+        <div className="bg-orb orb-2" />
+        <div className="bg-orb orb-3" />
+        <div className="bg-orb orb-4" />
+      </div>
       <AnimatePresence mode="wait">
         {showSplash && (
           <SplashScreen onComplete={() => setShowSplash(false)} />
