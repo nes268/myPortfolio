@@ -1,91 +1,122 @@
-import { type ReactNode, useCallback, useEffect, useRef, useState } from 'react'
+import { type ReactNode, useEffect, useRef, useState } from 'react'
 import { AnimatePresence, motion } from 'framer-motion'
 import profileImg from './assets/profile.jpg'
 import './App.css'
 
-function CursorGlitter() {
-  const canvasRef = useRef<HTMLCanvasElement>(null)
-  const particles = useRef<Array<{
-    x: number; y: number; vx: number; vy: number
-    size: number; alpha: number; decay: number
-    color: string
-  }>>([])
-  const mouse = useRef({ x: -100, y: -100 })
-  const raf = useRef(0)
+function EducationIcon() {
+  return (
+    <svg
+      viewBox="0 0 24 24"
+      width="22"
+      height="22"
+      fill="currentColor"
+      aria-hidden
+      style={{ display: 'block', flexShrink: 0 }}
+    >
+      {/* Cap shape */}
+      <path d="M12 3L1 9l11 6 9-4.91V17h2V9L12 3z" />
+      {/* Base / ribbon */}
+      <path d="M5 13.18v4L12 21l7-3.82v-4L12 17 5 13.18z" />
+    </svg>
+  )
+}
 
-  const COLORS = [
-    'rgba(167, 139, 218,',
-    'rgba(139, 108, 193,',
-    'rgba(180, 160, 230,',
-    'rgba(120, 80, 200,',
-    'rgba(200, 180, 255,',
-  ]
-
-  const onMove = useCallback((e: MouseEvent) => {
-    mouse.current = { x: e.clientX, y: e.clientY }
-    for (let i = 0; i < 2; i++) {
-      particles.current.push({
-        x: e.clientX + (Math.random() - 0.5) * 6,
-        y: e.clientY + (Math.random() - 0.5) * 6,
-        vx: (Math.random() - 0.5) * 1,
-        vy: (Math.random() - 0.5) * 1 - 0.3,
-        size: Math.random() * 1.2 + 0.4,
-        alpha: 0.8,
-        decay: Math.random() * 0.018 + 0.012,
-        color: COLORS[Math.floor(Math.random() * COLORS.length)],
-      })
-    }
-  }, [])
+function CursorSparkle() {
+  const [trail, setTrail] = useState<Array<{ x: number; y: number; id: number }>>([])
+  const idRef = useRef(0)
+  const lastRef = useRef({ x: 0, y: 0, t: 0 })
+  const throttleMs = 90
+  const maxTrail = 22
 
   useEffect(() => {
-    const canvas = canvasRef.current
-    if (!canvas) return
-    const ctx = canvas.getContext('2d')
-    if (!ctx) return
-
-    const resize = () => {
-      canvas.width = window.innerWidth
-      canvas.height = window.innerHeight
+    const onMove = (e: MouseEvent) => {
+      const now = Date.now()
+      if (now - lastRef.current.t < throttleMs) return
+      const dx = e.clientX - lastRef.current.x
+      const dy = e.clientY - lastRef.current.y
+      if (dx * dx + dy * dy < 36) return
+      lastRef.current = { x: e.clientX, y: e.clientY, t: now }
+      idRef.current += 1
+      const id = idRef.current
+      setTrail((prev) => [...prev.slice(-(maxTrail - 1)), { x: e.clientX, y: e.clientY, id }])
+      setTimeout(() => {
+        setTrail((prev) => prev.filter((p) => p.id !== id))
+      }, 700)
     }
-    resize()
-    window.addEventListener('resize', resize)
     window.addEventListener('mousemove', onMove)
-
-    const animate = () => {
-      ctx.clearRect(0, 0, canvas.width, canvas.height)
-      const ps = particles.current
-      for (let i = ps.length - 1; i >= 0; i--) {
-        const p = ps[i]
-        p.x += p.vx
-        p.y += p.vy
-        p.alpha -= p.decay
-        if (p.alpha <= 0) { ps.splice(i, 1); continue }
-        ctx.beginPath()
-        ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2)
-        ctx.fillStyle = `${p.color} ${p.alpha})`
-        ctx.fill()
-      }
-      raf.current = requestAnimationFrame(animate)
-    }
-    raf.current = requestAnimationFrame(animate)
-
-    return () => {
-      cancelAnimationFrame(raf.current)
-      window.removeEventListener('resize', resize)
-      window.removeEventListener('mousemove', onMove)
-    }
-  }, [onMove])
+    return () => window.removeEventListener('mousemove', onMove)
+  }, [])
 
   return (
-    <canvas
-      ref={canvasRef}
-      style={{
-        position: 'fixed',
-        inset: 0,
-        zIndex: 9999,
-        pointerEvents: 'none',
-      }}
-    />
+    <div className="cursor-sparkle-trail" aria-hidden>
+      {trail.map(({ x, y, id }) => (
+        <span
+          key={id}
+          className="cursor-sparkle-dot"
+          style={{ left: x, top: y }}
+        />
+      ))}
+    </div>
+  )
+}
+
+function BackgroundMotion() {
+  return (
+    <div className="bg-motion" aria-hidden="true">
+      <div className="bg-motion-shimmer" />
+      <motion.div
+        className="bg-blob bg-blob-1"
+        animate={{
+          x: ['0%', '8%', '-5%', '0%'],
+          y: ['0%', '-10%', '6%', '0%'],
+          scale: [1, 1.06, 0.98, 1],
+        }}
+        transition={{
+          duration: 28,
+          repeat: Infinity,
+          ease: 'easeInOut',
+        }}
+      />
+      <motion.div
+        className="bg-blob bg-blob-2"
+        animate={{
+          x: ['0%', '-6%', '10%', '0%'],
+          y: ['0%', '8%', '-12%', '0%'],
+          scale: [1, 0.96, 1.05, 1],
+        }}
+        transition={{
+          duration: 32,
+          repeat: Infinity,
+          ease: 'easeInOut',
+        }}
+      />
+      <motion.div
+        className="bg-blob bg-blob-3"
+        animate={{
+          x: ['0%', '10%', '-8%', '0%'],
+          y: ['0%', '6%', '10%', '0%'],
+          scale: [1, 1.04, 0.97, 1],
+        }}
+        transition={{
+          duration: 26,
+          repeat: Infinity,
+          ease: 'easeInOut',
+        }}
+      />
+      <motion.div
+        className="bg-blob bg-blob-4"
+        animate={{
+          x: ['0%', '-9%', '5%', '0%'],
+          y: ['0%', '-6%', '9%', '0%'],
+          scale: [1, 0.98, 1.06, 1],
+        }}
+        transition={{
+          duration: 35,
+          repeat: Infinity,
+          ease: 'easeInOut',
+        }}
+      />
+    </div>
   )
 }
 
@@ -160,11 +191,11 @@ const staggerContainer = {
 }
 
 const staggerItem = {
-  hidden: { opacity: 0, y: 24 },
+  hidden: { opacity: 0, y: 16 },
   visible: {
     opacity: 1,
     y: 0,
-    transition: { duration: 0.5, ease: [0.22, 1, 0.36, 1] as const },
+    transition: { duration: 0.4, ease: [0.25, 0.46, 0.45, 0.94] as const },
   },
 }
 
@@ -202,7 +233,7 @@ const SOCIAL_LINKS: SocialLink[] = [
   },
 ]
 
-const SPLASH_TEXT = "NESHANDRA G'S PORTFOLIO"
+const SPLASH_TEXT = 'Portfolio'
 const EYEBROW_TEXT = "Hi, I'm Neshandra G"
 
 function Typewriter({ text, delay = 0 }: { text: string; delay?: number }) {
@@ -237,51 +268,88 @@ function Typewriter({ text, delay = 0 }: { text: string; delay?: number }) {
   )
 }
 
+const SPLASH_SPARKLES = [
+  { x: '18%', y: '25%', delay: 0 },
+  { x: '82%', y: '22%', delay: 0.4 },
+  { x: '12%', y: '55%', delay: 0.2 },
+  { x: '88%', y: '58%', delay: 0.6 },
+  { x: '25%', y: '78%', delay: 0.3 },
+  { x: '75%', y: '75%', delay: 0.5 },
+  { x: '50%', y: '18%', delay: 0.15 },
+  { x: '50%', y: '88%', delay: 0.35 },
+  { x: '5%', y: '42%', delay: 0.25 },
+  { x: '95%', y: '48%', delay: 0.55 },
+]
+
 function SplashScreen({ onComplete }: { onComplete: () => void }) {
+  const [phase, setPhase] = useState<'letters' | 'pop'>('letters')
+
   return (
     <motion.div
       className="splash-screen"
       exit={{ opacity: 0 }}
-      transition={{ duration: 0.5, ease: 'easeInOut' }}
+      transition={{ duration: 1.2, ease: [0.25, 0.46, 0.45, 0.94] }}
     >
-      <motion.h1
-        className="splash-title"
-        initial="hidden"
-        animate="visible"
-        variants={{
-          hidden: {},
-          visible: {
-            transition: { staggerChildren: 0.06, delayChildren: 0.3 },
-          },
-        }}
-        onAnimationComplete={(): void => {
-          setTimeout(onComplete, 800)
-        }}
-      >
-        {SPLASH_TEXT.split('').map((char, i) => (
-          <motion.span
-            key={`${char}-${i}`}
-            className={char === ' ' ? 'splash-space' : 'splash-char'}
-            variants={{
-              hidden: { opacity: 0, y: 50, filter: 'blur(8px)' },
-              visible: {
-                opacity: 1,
-                y: 0,
-                filter: 'blur(0px)',
-                transition: { duration: 0.45, ease: [0.22, 1, 0.36, 1] as const },
-              },
+      <div className="splash-sparkles" aria-hidden>
+        {SPLASH_SPARKLES.map((s, i) => (
+          <span
+            key={i}
+            className="splash-sparkle-dot"
+            style={{
+              left: s.x,
+              top: s.y,
+              animationDelay: `${s.delay}s`,
             }}
-          >
-            {char === ' ' ? '\u00A0' : char}
-          </motion.span>
+          />
         ))}
-      </motion.h1>
+      </div>
       <motion.div
-        className="splash-bar"
-        initial={{ scaleX: 0 }}
-        animate={{ scaleX: 1 }}
-        transition={{ duration: 1.8, delay: 0.2, ease: [0.22, 1, 0.36, 1] }}
-      />
+        className="splash-title-wrap"
+        animate={phase === 'pop' ? { scale: [1, 1.06, 1] } : { scale: 1 }}
+        transition={
+          phase === 'pop'
+            ? { duration: 1.2, ease: [0.25, 0.46, 0.45, 0.94] as const }
+            : {}
+        }
+        onAnimationComplete={phase === 'pop' ? onComplete : undefined}
+      >
+        <motion.h1
+          className="splash-title"
+          initial="hidden"
+          animate="visible"
+          variants={{
+            hidden: {},
+            visible: {
+              transition: { staggerChildren: 0.12, delayChildren: 0.5 },
+            },
+          }}
+          onAnimationComplete={(): void => {
+            if (phase === 'letters') setPhase('pop')
+          }}
+        >
+          {SPLASH_TEXT.split('').map((char, i) => (
+            <motion.span
+              key={`${char}-${i}`}
+              className={char === ' ' ? 'splash-space' : 'splash-char'}
+              variants={{
+                hidden: { opacity: 0, scale: 0.6 },
+                visible: {
+                  opacity: 1,
+                  scale: 1,
+                  transition: {
+                    type: 'spring',
+                    stiffness: 120,
+                    damping: 18,
+                    mass: 1.2,
+                  } as const,
+                },
+              }}
+            >
+              {char === ' ' ? '\u00A0' : char}
+            </motion.span>
+          ))}
+        </motion.h1>
+      </motion.div>
     </motion.div>
   )
 }
@@ -290,6 +358,7 @@ function App() {
   const [showSplash, setShowSplash] = useState(true)
   const [activeSection, setActiveSection] = useState<SectionId>('home')
   const [revealedSections, setRevealedSections] = useState<Set<SectionId>>(new Set(['home']))
+  const [experienceOpen, setExperienceOpen] = useState<boolean[]>([false, false])
   const [modalCertificate, setModalCertificate] = useState<{
     title: string
     issuer: string
@@ -438,39 +507,29 @@ function App() {
                 <div className="profile-orbit">
                   <motion.div
                     className="profile-shadow-ring"
-                    animate={{
-                      scale: [1, 1.08, 1],
-                      opacity: [0.5, 0.8, 0.5],
-                    }}
-                    transition={{
-                      duration: 4,
-                      repeat: Infinity,
-                      ease: 'easeInOut',
-                    }}
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 0.4 }}
+                    transition={{ duration: 0.6 }}
                   />
                   <motion.div
                     className="profile-glow"
-                    animate={{
-                      scale: [1, 1.12, 1],
-                      opacity: [0.6, 1, 0.6],
-                    }}
-                    transition={{
-                      duration: 3,
-                      repeat: Infinity,
-                      ease: 'easeInOut',
-                    }}
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 0.6 }}
+                    transition={{ duration: 0.6, delay: 0.2 }}
                   />
-                  <div className="profile-photo">
+                  <motion.div
+                    className="profile-photo"
+                    initial={{ scale: 0.95, opacity: 0 }}
+                    animate={{ scale: 1, opacity: 1 }}
+                    transition={{ duration: 0.5, ease: [0.25, 0.46, 0.45, 0.94] }}
+                  >
                     <img src={profileImg} alt="Neshandra G portrait" />
-                  </div>
+                  </motion.div>
                   <motion.div
                     className="orbit-outline"
-                    animate={{ rotate: 360 }}
-                    transition={{
-                      duration: 20,
-                      repeat: Infinity,
-                      ease: 'linear',
-                    }}
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 0.6 }}
+                    transition={{ duration: 0.8, delay: 0.3 }}
                   />
                 </div>
               </div>
@@ -534,25 +593,28 @@ function App() {
             >
               {[
                 {
-                  title: 'House Price Prediction',
+                  title: 'TransSmart',
                   description:
-                    'Regression model predicting house prices using location, area, and amenity features with a full data pipeline covering cleaning, training, evaluation, and visualization.',
-                  tech: ['Python', 'Pandas', 'NumPy', 'Scikit-Learn', 'Matplotlib'],
-                  codeUrl: '#',
+                    'AI-powered logistics platform connecting shippers and transporters with intelligent truck matching and route optimization. Real-time trip tracking, job lifecycle management, and role-based dashboards for seamless logistics coordination.',
+                  tech: ['React.js', 'Express.js', 'Node.js', 'MongoDB', 'Socket.io', 'GroqAI', 'OpenstreetMaps API'],
                 },
                 {
-                  title: 'Compliance & Startup Management Platform',
+                  title: 'Compliance & Startup Management',
                   description:
-                    'Dashboard enabling startups to manage compliance documents, legal filings, and reminders with scalable multi-database APIs and GridFS-powered document handling.',
+                    'Intuitive dashboard enabling startups to manage compliance documents, legal filings, reminders, and progress metrics in a unified secure platform. Scalable backend APIs with multi-database support (MongoDB + PostgreSQL) and GridFS for document handling.',
                   tech: ['React.js', 'Tailwind CSS', 'Express.js', 'MongoDB', 'Node.js'],
-                  codeUrl: '#',
                 },
                 {
                   title: 'STOCKQ — Stock Price Prediction System',
                   description:
-                    'End-to-end stock price prediction system combining historical market data, regression-based ML models via a Flask backend, and a React.js frontend for interactive forecasting.',
-                  tech: ['React.js', 'Python', 'Flask', 'ML', 'Tailwind CSS'],
-                  codeUrl: '#',
+                    'Stock price prediction system using historical market data and regression-based machine learning models. Flask backend, Python-based ML models, and database storage with a React.js and Tailwind CSS frontend for end-to-end prediction.',
+                  tech: ['React.js', 'Python', 'Flask', 'ML'],
+                },
+                {
+                  title: 'DECOHEREX — Quantum Job Optimization',
+                  description:
+                    'Dashboard to submit, monitor, and analyze quantum computing jobs on IBM Quantum backends. Integrated Qiskit APIs to track job status, optimize backend selection, and visualize execution results.',
+                  tech: ['IBM Quantum API', 'Python', 'Qiskit', 'React.js'],
                 },
               ].map((project) => (
                 <motion.article
@@ -683,7 +745,7 @@ function App() {
                 <span className="achievement-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6" /><path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18" /><path d="M4 22h16" /><path d="M10 14.66V17c0 .55-.47.98-.97 1.21C7.85 18.75 7 20.24 7 22" /><path d="M14 14.66V17c0 .55.47.98.97 1.21C16.15 18.75 17 20.24 17 22" /><path d="M18 2H6v7a6 6 0 0 0 12 0V2Z" /></svg></span>
                 <div>
                   <h3><a href="https://drive.google.com/file/d/1E_TkE-e1wQ1jcO0xtJnrHQDYYyXsaE1p/view?usp=drivesdk" target="_blank" rel="noopener noreferrer">AWS ImpactX Challenge IIT Bombay</a></h3>
-                  <p>Finalist</p>
+                  <p>Top 50</p>
                 </div>
               </motion.div>
               <motion.div className="achievement-item glass-card" variants={staggerItem}>
@@ -712,6 +774,48 @@ function App() {
               in AI and a strong commitment to inclusive design. I enjoy building end-to-end
               solutions that turn complex problems into simple, meaningful user experiences.
             </p>
+
+            <div className="about-timeline-wrap">
+              <h2 className="about-subtitle">Education</h2>
+              <div className="edu-timeline">
+                <div className="edu-timeline-line" aria-hidden="true" />
+                {[
+                  { year: '2022', title: 'Secondary Education', subtitle: '', score: '97%', school: 'Srimathi Sundaravalli Memorial School', current: false },
+                  { year: '2024', title: 'Higher / Senior Secondary Education', subtitle: '', score: '91%', school: 'Srimathi Sundaravalli Memorial School', current: false },
+                  { year: '2024 – 2028', title: 'B.Tech – Information Technology', subtitle: '', score: 'CGPA 9.11', school: 'Chennai Institute of Technology', current: true },
+                ].map((entry, i) => (
+                  <motion.div
+                    key={entry.year + i}
+                    className="edu-timeline-item"
+                    initial={{ opacity: 0, y: 20 }}
+                    whileInView={{ opacity: 1, y: 0 }}
+                    viewport={{ once: true, amount: 0.3, margin: '0px 0px -40px 0px' }}
+                    transition={{ duration: 0.45, delay: i * 0.1, ease: [0.25, 0.46, 0.45, 0.94] }}
+                  >
+                    <div className="edu-timeline-marker">
+                      <span className={`edu-timeline-dot ${entry.current ? 'edu-timeline-dot-current' : ''}`}>
+                        <EducationIcon />
+                      </span>
+                    </div>
+                    <motion.article
+                      className={`edu-timeline-card glass-card ${entry.current ? 'edu-timeline-card-current' : ''}`}
+                      whileHover={{ x: 4 }}
+                      transition={{ duration: 0.2 }}
+                    >
+                      <div className="edu-timeline-card-head">
+                        <span className="edu-timeline-year">{entry.year}</span>
+                        {entry.current && <span className="edu-timeline-badge">Current</span>}
+                        <span className="edu-timeline-score">{entry.score}</span>
+                      </div>
+                      <h3 className="edu-timeline-title">{entry.title}</h3>
+                      {entry.subtitle ? <p className="edu-timeline-subtitle">{entry.subtitle}</p> : null}
+                      <p className="edu-timeline-school">{entry.school}</p>
+                    </motion.article>
+                  </motion.div>
+                ))}
+              </div>
+            </div>
+
             <motion.div
               className="about-grid"
               variants={staggerContainer}
@@ -719,40 +823,71 @@ function App() {
               whileInView="visible"
               viewport={{ once: true, amount: 0.12 }}
             >
-              <motion.article className="glass-card" variants={staggerItem}>
-                <h3>Education</h3>
-                <p>B.Tech – Information Technology</p>
-                <p>Chennai Institute of Technology</p>
-                <span className="about-note">2024–2028</span>
-                <span className="about-note">CGPA 9.13</span>
-              </motion.article>
-              <motion.article className="glass-card" variants={staggerItem}>
-                <h3>Experience</h3>
-                <ul className="about-list">
-                  <li>
-                    <strong>Frontend Developer – CITBIF</strong>
-                    <span>May 2025 – Jun 2025</span>
-                    <p>Built modular React + Tailwind interfaces, including upload flows and dashboards.</p>
-                  </li>
-                  <li>
-                    <strong>AIML Intern – Edunet Foundation</strong>
-                    <span>Oct 2025 – Nov 2025</span>
-                    <p>Co-created EVBot, an AI assistant for EV maintenance and battery insights.</p>
-                  </li>
-                </ul>
-              </motion.article>
-              <motion.article className="glass-card" variants={staggerItem}>
-                <h3>Organizations</h3>
-                <ul className="about-list">
-                  <li>
-                    <strong>Impact</strong>
-                    <p>Figma & Canva Designer crafting visual assets for events.</p>
-                  </li>
-                  <li>
-                    <strong>Trojans</strong>
-                    <p>Event Organizer coordinating tech-community experiences.</p>
-                  </li>
-                </ul>
+              <motion.article className="about-block experience-card" variants={staggerItem}>
+                <h3>Professional Experience</h3>
+                <div className="experience-accordion">
+                  {[
+                    {
+                      role: 'CITBIF Intern – Chennai Institute Of Technology',
+                      date: 'Sep 2024 – May 2028',
+                      details: [
+                        'AI-Powered Legal Compliance Platform and Startup ecosystem.',
+                        'Led development of modular, responsive UI components in React.js using Tailwind CSS tailored for startups.',
+                        'Designed and implemented dynamic document upload workflows and real-time compliance dashboards, improving user efficiency.',
+                      ],
+                    },
+                    {
+                      role: 'Edunet Shell Skills4Future Internship – Edunet Foundation',
+                      date: 'Oct 2025 – Nov 2025',
+                      details: [
+                        'Worked on EVBot, an AI-powered EV maintenance tool integrating machine learning to predict optimal charging needs and provide smart insights through a chatbot.',
+                        'Developed a web-based dashboard using Flask and Python to display predictions, maintenance tips, and explainable AI insights for better user understanding.',
+                      ],
+                    },
+                  ].map((item, i) => (
+                    <div key={i} className="experience-item">
+                      <button
+                        type="button"
+                        className="experience-trigger"
+                        onClick={() => setExperienceOpen((prev) => { const next = [...prev]; next[i] = !next[i]; return next })}
+                        aria-expanded={experienceOpen[i]}
+                        aria-controls={`experience-details-${i}`}
+                        id={`experience-trigger-${i}`}
+                      >
+                        <span className="experience-role">{item.role}</span>
+                        <span className="experience-date">{item.date}</span>
+                        <motion.span
+                          className="experience-chevron"
+                          animate={{ rotate: experienceOpen[i] ? 180 : 0 }}
+                          transition={{ duration: 0.25 }}
+                          aria-hidden
+                        >
+                          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M6 9l6 6 6-6" /></svg>
+                        </motion.span>
+                      </button>
+                      <AnimatePresence initial={false}>
+                        {experienceOpen[i] && (
+                          <motion.div
+                            id={`experience-details-${i}`}
+                            className="experience-details"
+                            initial={{ height: 0, opacity: 0 }}
+                            animate={{ height: 'auto', opacity: 1 }}
+                            exit={{ height: 0, opacity: 0 }}
+                            transition={{ duration: 0.3, ease: [0.25, 0.46, 0.45, 0.94] }}
+                            role="region"
+                            aria-labelledby={`experience-trigger-${i}`}
+                          >
+                            <ul className="experience-detail-list">
+                              {item.details.map((text, j) => (
+                                <li key={j}>{text}</li>
+                              ))}
+                            </ul>
+                          </motion.div>
+                        )}
+                      </AnimatePresence>
+                    </div>
+                  ))}
+                </div>
               </motion.article>
             </motion.div>
           </div>
@@ -834,21 +969,26 @@ function App() {
 
   return (
     <>
-      <CursorGlitter />
-      <div className="bg-orbs" aria-hidden="true">
-        <div className="bg-orb orb-1" />
-        <div className="bg-orb orb-2" />
-        <div className="bg-orb orb-3" />
-        <div className="bg-orb orb-4" />
-      </div>
+      <BackgroundMotion />
+      <CursorSparkle />
       <AnimatePresence mode="wait">
         {showSplash && (
           <SplashScreen onComplete={() => setShowSplash(false)} />
         )}
       </AnimatePresence>
       {!showSplash && (
-    <div className="app-shell">
-      <header className="app-header">
+    <motion.div
+      className="app-shell"
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      transition={{ duration: 0.7, ease: [0.25, 0.46, 0.45, 0.94] }}
+    >
+      <motion.header
+        className="app-header"
+        initial={{ y: -20, opacity: 0 }}
+        animate={{ y: 0, opacity: 1 }}
+        transition={{ duration: 0.4, delay: 0.1, ease: [0.25, 0.46, 0.45, 0.94] }}
+      >
         <div className="brand">
           <span className="brand-text">Neshandra G</span>
         </div>
@@ -856,7 +996,7 @@ function App() {
           <ul className="nav-list">
             {NAV_ITEMS.map((item) => (
               <li key={item.id}>
-                <button
+                <motion.button
                   type="button"
                   className={[
                     'nav-link',
@@ -865,14 +1005,16 @@ function App() {
                     .join(' ')
                     .trim()}
                   onClick={() => handleNavigate(item.id)}
+                  whileHover={{ scale: 1.02 }}
+                  whileTap={{ scale: 0.98 }}
                 >
                   {item.label}
-                </button>
+                </motion.button>
               </li>
             ))}
           </ul>
         </nav>
-      </header>
+      </motion.header>
       <main className="app-main">
         <div className="section-stack">
           {NAV_ITEMS.map((item) => (
@@ -888,21 +1030,16 @@ function App() {
                 .join(' ')
                 .trim()}
               data-active={activeSection === item.id}
-              initial={{ opacity: 0, y: 40, scale: 0.95 }}
+              initial={{ opacity: 0, y: 24 }}
               animate={
                 revealedSections.has(item.id)
                   ? {
-                      opacity: activeSection === item.id ? 1 : 0.5,
-                      y: activeSection === item.id ? -6 : 0,
-                      scale: activeSection === item.id ? 1.03 : 0.96,
+                      opacity: activeSection === item.id ? 1 : 0.6,
+                      y: 0,
                     }
-                  : { opacity: 0, y: 40, scale: 0.95 }
+                  : { opacity: 0, y: 24 }
               }
-              transition={
-                activeSection === item.id
-                  ? { type: 'spring', stiffness: 260, damping: 22 }
-                  : { type: 'spring', stiffness: 220, damping: 26 }
-              }
+              transition={{ duration: 0.4, ease: [0.25, 0.46, 0.45, 0.94] }}
             >
               {renderSectionContent(item.id)}
             </motion.section>
@@ -952,12 +1089,18 @@ function App() {
           </motion.div>
         )}
       </AnimatePresence>
-      <footer className="app-footer">
+      <motion.footer
+        className="app-footer"
+        initial={{ opacity: 0 }}
+        whileInView={{ opacity: 1 }}
+        viewport={{ once: true }}
+        transition={{ duration: 0.4 }}
+      >
         <p>
           © {new Date().getFullYear()} Neshandra G · Portfolio
         </p>
-      </footer>
-    </div>
+      </motion.footer>
+    </motion.div>
       )}
     </>
   )
