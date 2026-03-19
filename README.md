@@ -1,6 +1,6 @@
 # Neshandra G - Portfolio
 
-Personal portfolio website built with React, TypeScript, Framer Motion, and Vite. Features a dark blue-purple gradient theme, animated splash screen, scroll-based section transitions, and glassmorphism UI.
+
 
 ## Setup
 
